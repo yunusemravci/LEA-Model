@@ -22,24 +22,24 @@ df = df.interpolate(method='linear')
 # Loop through each mobility column
 for mobility_column in mobility_columns:
     # Use your guidance to get an initial estimate for p
-    p_init = df['Unnamed: 0'].iloc[df[mobility_column].idxmax()]
+    p_init = df['time_index'].iloc[df[mobility_column].idxmax()]
 
     # Calibrate the parameters
     bounds = ([0, 0,0], [np.inf, np.inf, np.inf])
     
     # Remove the first row where 'Unnamed: 0' value is 0
-    df_filtered = df[df['Unnamed: 0'] != 0]
+    df_filtered = df[df['time_index'] != 0]
     # Filter out rows where mobility column contains NaN or infinite values
     df_filtered = df_filtered[np.isfinite(df_filtered[mobility_column])]
 
-    params, _ = curve_fit(h_norm, df_filtered['Unnamed: 0'].values, df_filtered[mobility_column].values / df_filtered['Unnamed: 0'].values, 
+    params, _ = curve_fit(h_norm, df_filtered['time_index'].values, df_filtered[mobility_column].values / df_filtered['time_index'].values, 
                           p0=[1, p_init, 30],maxfev=2000)
     
     # Extract parameters
     a_est, p_est, s_est = params
 
     # Compute h_est(t)
-    df_filtered['h_est'] = h_norm(df_filtered['Unnamed: 0'], a_est, p_est, s_est) * df_filtered['Unnamed: 0']
+    df_filtered['h_est'] = h_norm(df_filtered['time_index'], a_est, p_est, s_est) * df_filtered['time_index']
 
     # Compute R^2
     residuals = df_filtered[mobility_column] - df_filtered['h_est']
@@ -54,7 +54,7 @@ for mobility_column in mobility_columns:
     print(f"R^2: {r2}")
     print(f"RMSE: {rmse:.4f}")
 
-    shifted_t = df_filtered['Unnamed: 0'] - df_filtered['Unnamed: 0'].min()
+    shifted_t = df_filtered['Unnamed: 0'] - df_filtered['time_index'].min()
 
     # Plot the data
     plt.scatter(shifted_t, df_filtered[mobility_column], label=f"{mobility_column} percent change", color='blue')
